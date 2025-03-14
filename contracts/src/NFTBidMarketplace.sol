@@ -82,7 +82,7 @@ contract NFTBidMarketplace is ERC721URIStorage {
             true
         );
 
-        approve(address(this), tokenId);
+        _transfer(msg.sender, address(this), tokenId);
     }
 
     function getAllNFTs() public view returns (ListedToken[] memory) {

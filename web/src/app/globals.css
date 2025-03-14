@@ -3,6 +3,10 @@
   themes: light --default, dark --prefersdark, custom;
 }
 
+@utility loading-xl {
+  @apply w-12;
+}
+
 @plugin "daisyui/theme" {
   name: "custom";
   default: true;

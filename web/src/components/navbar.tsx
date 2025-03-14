@@ -1,8 +1,93 @@
+"use client";
+
 import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { ethers } from "ethers"; // Correct import for ethers
 
 export function Navbar() {
+  const [connected, setConnected] = useState(false);
+  const [currentConnectedAddress, setCurrentConnectedAddress] = useState("0x");
+
+  const getAddress = useCallback(async () => {
+    try {
+      // Check if window.ethereum is available
+      if (typeof window.ethereum === "undefined") {
+        console.error("Ethereum provider is not available");
+        return;
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = provider.getSigner();
+      const addr = await (await signer).getAddress();
+      setCurrentConnectedAddress(addr);
+      setConnected(true);
+    } catch (error) {
+      console.error("Error fetching address:", error);
+      setConnected(false);
+    }
+  }, []);
+
+  async function connectWebsite() {
+    if (typeof window.ethereum === "undefined") {
+      console.error("Ethereum provider is not available");
+      return;
+    }
+
+    try {
+      const chainId = await window.ethereum.request({ method: "eth_chainId" });
+      if (chainId !== "0x7a69") {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: "0x7a69" }],
+        });
+      }
+      await window.ethereum
+        .request({ method: "eth_requestAccounts" })
+        .then(() => {
+          getAddress();
+          window.location.replace(location.pathname);
+        });
+    } catch (error) {
+      console.error("Error connecting wallet:", error);
+    }
+  }
+
+  useEffect(() => {
+    if (typeof window.ethereum === "undefined") {
+      console.error("Ethereum provider is not available");
+      return;
+    }
+
+    const checkConnection = async () => {
+      if (window.ethereum) {
+        const val = await window.ethereum.request({ method: "eth_accounts" });
+
+        if (val && val.length > 0) {
+          getAddress();
+        } else {
+          setConnected(false);
+        }
+      }
+    };
+
+    checkConnection();
+
+    // Listen for account changes
+    window.ethereum.on("accountsChanged", () => {
+      window.location.replace(location.pathname);
+    });
+
+    return () => {
+      if (typeof window.ethereum !== "undefined") {
+        window.ethereum.removeListener("accountsChanged", () => {
+          window.location.replace(location.pathname);
+        });
+      }
+    };
+  }, [getAddress]);
+
   return (
-    <div className="navbar max-w-7xl mx-auto bg-base-300 shadow-md sticky top-0 z-50 rounded-xl my-5 md:px-8 py-5">
+    <div className="navbar max-w-7xl mx-auto shadow-md sticky top-0 z-50 rounded-xl my-5 md:px-8 py-5 backdrop-blur-3xl">
       <div className="navbar-start">
         <div className="dropdown">
           {/* biome-ignore lint/a11y/useSemanticElements: <explanation> */}
@@ -15,13 +100,12 @@ export function Navbar() {
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              {" "}
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
                 d="M4 6h16M4 12h8m-8 6h16"
-              />{" "}
+              />
             </svg>
           </div>
           <ul
@@ -58,9 +142,19 @@ export function Navbar() {
         </ul>
       </div>
       <div className="navbar-end">
-        <Link href={"/"} className="btn btn-neutral">
-          Connect Wallet
-        </Link>
+        {connected && currentConnectedAddress !== "0x" ? (
+          <button type="button" className="btn btn-success">
+            Connected
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-neutral"
+            onClick={connectWebsite}
+          >
+            Connect Wallet
+          </button>
+        )}
       </div>
     </div>
   );

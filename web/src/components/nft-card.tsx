@@ -1,20 +1,23 @@
-/* eslint-disable @next/next/no-img-element */
-
+import type { INFT } from "@/app/page";
+import Image from "next/image";
 import Link from "next/link";
 
-export function NFTCard() {
+export function NFTCard({ nft }: { nft: INFT }) {
   return (
     <div className="card bg-base-100 w-full shadow-sm">
       <figure>
-        <img
-          src="https://media.licdn.com/dms/image/v2/C5612AQEhtPNooqNUeg/article-cover_image-shrink_600_2000/article-cover_image-shrink_600_2000/0/1641999038804?e=2147483647&v=beta&t=ysRtp4HROlBk4HpDBBXq_YKlS6pI98ap21naFFLdWgM"
-          alt="Bored apes NFT pic"
+        <Image
+          src={nft.image}
+          alt={`${nft.name} nft pic`}
+          width={1080}
+          height={1920}
+          className="h-96 object-cover"
         />
       </figure>
       <div className="card-body">
-        <h2 className="card-title">Bored Apes</h2>
+        <h2 className="card-title">{nft.name}</h2>
         <div className="card-actions justify-end">
-          <Link href={"/123"}>
+          <Link href={`/${nft.tokenId.toString()}`}>
             <button className="btn btn-secondary" type="button">
               See more
             </button>

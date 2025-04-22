@@ -4,11 +4,11 @@ import { type FormEvent, useState } from "react";
 import { toast } from "sonner";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { Contract, parseUnits, ethers } from "ethers";
+import { Contract, parseUnits, ethers, formatEther } from "ethers";
 
 import NFTBidMarketplace from "../../NFTBidMarketplace.json";
 
-export function ListNFTForm() {
+export function ListAuctionForm() {
   const router = useRouter();
 
   const [file, setFile] = useState<File>();
@@ -17,7 +17,8 @@ export function ListNFTForm() {
   const [nftDetails, setNftDetails] = useState({
     name: "",
     description: "",
-    price: "",
+    startingPrice: "",
+    duration: "",
   });
   const [loading, setLoading] = useState(false);
 
@@ -44,12 +45,21 @@ export function ListNFTForm() {
     }
   }
 
-  async function handleListNFT(e: FormEvent) {
+  async function handleListAuction(e: FormEvent) {
     e.preventDefault();
 
-    const { name, description, price } = nftDetails;
-    if (!file || !name || !description || !price) {
+    const { name, description, startingPrice, duration } = nftDetails;
+    if (!file || !name || !description || !startingPrice || !duration) {
       toast.error("Please enter all the fields");
+      return;
+    }
+
+    // Validate and convert startingPrice and duration
+    const price = Number.parseFloat(startingPrice);
+    const durationInSeconds = Number.parseInt(duration) * 86400; // Convert duration to seconds
+
+    if (Number.isNaN(price) || Number.isNaN(durationInSeconds)) {
+      toast.error("Invalid starting price or duration");
       return;
     }
 
@@ -77,38 +87,49 @@ export function ListNFTForm() {
         signer
       );
 
-      const price = parseUnits(nftDetails.price, "ether");
-      let listingFee = await nftBidMarketplace.getListingFee();
-      listingFee = listingFee.toString();
+      const startingPrice = parseUnits(nftDetails.startingPrice, "ether");
+      let auctionFee = await nftBidMarketplace.getAuctionFee();
+      auctionFee = auctionFee.toString();
+
+      const balance = await provider.getBalance(signer.address);
+      console.log("User's balance:", formatEther(balance)); // Convert to ether for easy reading
+
+      if (balance < auctionFee) {
+        toast.error("Insufficient balance to list the auction");
+        return;
+      }
 
       const transaction = await nftBidMarketplace.createToken(
         signedUrl,
-        price,
         0,
-        0,
-        0,
+        1,
+        startingPrice,
+        durationInSeconds,
         {
-          value: listingFee,
+          value: auctionFee,
         }
       );
-
-      console.log(transaction);
 
       const result = await transaction.wait();
 
       console.log(result);
 
       if (result.status === 1) {
-        toast.success("NFT listed");
+        toast.success("Auction listed");
         setFile(undefined);
-        setNftDetails({ name: "", description: "", price: "" });
+        setNftDetails({
+          name: "",
+          description: "",
+          startingPrice: "",
+          duration: "",
+        });
         router.replace("/");
       } else {
         toast.error("Transaction failed");
       }
     } catch (error) {
       console.log("Error:", error);
-      toast.error("Trouble listing NFT");
+      toast.error("Trouble listing NFT auction");
     } finally {
       setLoading(false);
     }
@@ -121,7 +142,7 @@ export function ListNFTForm() {
   return (
     <div className="card bg-base-300 w-full max-w-xl shrink-0 shadow-lg">
       <div className="card-body">
-        <form onSubmit={handleListNFT}>
+        <form onSubmit={handleListAuction}>
           <fieldset className="fieldset gap-3">
             <div className="space-y-1">
               <label
@@ -177,16 +198,37 @@ export function ListNFTForm() {
                 className="fieldset-label text-sm text-base-content font-semibold"
                 htmlFor="price"
               >
-                Price (in ETH)
+                Starting price (in ETH)
               </label>
               <input
                 onChange={(e) =>
-                  setNftDetails({ ...nftDetails, price: e.target.value })
+                  setNftDetails({
+                    ...nftDetails,
+                    startingPrice: e.target.value,
+                  })
                 }
-                value={nftDetails.price}
+                value={nftDetails.startingPrice}
                 type="text"
                 className="input w-full"
                 placeholder="price"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label
+                className="fieldset-label text-sm text-base-content font-semibold"
+                htmlFor="duration"
+              >
+                Duration (in days)
+              </label>
+              <input
+                onChange={(e) =>
+                  setNftDetails({ ...nftDetails, duration: e.target.value })
+                }
+                value={nftDetails.duration}
+                type="text"
+                className="input w-full"
+                placeholder="duration"
               />
             </div>
 

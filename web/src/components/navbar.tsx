@@ -120,6 +120,9 @@ export function Navbar() {
               <Link href={"/list-nft"}>List NFT</Link>
             </li>
             <li>
+              <Link href={"/list-auction"}>List Auction</Link>
+            </li>
+            <li>
               <Link href={"/profile"}>Profile</Link>
             </li>
           </ul>
@@ -135,6 +138,9 @@ export function Navbar() {
           </li>
           <li>
             <Link href={"/list-nft"}>List NFT</Link>
+          </li>
+          <li>
+            <Link href={"/list-auction"}>List Auction</Link>
           </li>
           <li>
             <Link href={"/profile"}>Profile</Link>

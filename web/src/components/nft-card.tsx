@@ -1,8 +1,14 @@
-import type { INFT } from "@/app/page";
+import type { IAuctionNFT, INFT } from "@/app/page";
 import Image from "next/image";
 import Link from "next/link";
 
-export function NFTCard({ nft }: { nft: INFT }) {
+export function NFTCard({
+  nft,
+  type,
+}: {
+  nft: INFT | IAuctionNFT;
+  type?: "LISTING" | "AUCTION";
+}) {
   return (
     <div className="card bg-base-100 w-full shadow-sm">
       <figure>
@@ -17,7 +23,13 @@ export function NFTCard({ nft }: { nft: INFT }) {
       <div className="card-body">
         <h2 className="card-title">{nft.name}</h2>
         <div className="card-actions justify-end">
-          <Link href={`/${nft.tokenId.toString()}`}>
+          <Link
+            href={
+              type === "LISTING"
+                ? `/${nft.tokenId.toString()}`
+                : `/auctions/${nft.tokenId.toString()}`
+            }
+          >
             <button className="btn btn-secondary" type="button">
               See more
             </button>

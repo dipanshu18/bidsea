@@ -31,7 +31,7 @@ export default function NFTDetails({
       const address = await signer.getAddress();
 
       const contract = new ethers.Contract(
-        "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+        process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as string,
         NFTBidMarketplace.abi,
         signer
       );
@@ -72,7 +72,7 @@ export default function NFTDetails({
 
         //Pull the deployed contract instance
         const contract = new ethers.Contract(
-          "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+          process.env.NEXT_PUBLIC_CONTRACT_ADDRESS as string,
           NFTBidMarketplace.abi,
           signer
         );
@@ -132,6 +132,7 @@ export default function NFTDetails({
           Ask price:{" "}
           <span className="text-lg font-extrabold">{nftInfo?.price} ETH</span>
         </p>
+        <p className="">Seller: {nftInfo?.seller}</p>
         {connectedWalletAddress === nftInfo?.seller ? (
           <h1 className="text-xl font-extrabold text-primary">
             You own this NFT
